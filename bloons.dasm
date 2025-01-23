@@ -1,0 +1,185 @@
+
+	processor 6502
+        include "vcs.h"
+        include "macro.h"
+        include "xmacro.h"
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Variables segment
+
+        seg.u Variables
+	org $80
+
+Counter		.byte
+Temp		.byte
+BloonOffset	.byte
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Code segment
+
+	seg Code
+        org $f000
+
+
+Start
+	CLEAN_START
+
+NextFrame
+; This macro efficiently gives us 1 + 3 lines of VSYNC
+	VERTICAL_SYNC
+	
+; 36 lines of VBLANK
+	ldx #30
+LVBlank	sta WSYNC
+	dex
+	bne LVBlank
+; Disable VBLANK
+        stx VBLANK
+; Set foreground color
+	lda #$FA
+    sta COLUPF
+; Set background color
+	lda #$D4
+	sta COLUBK
+; Set player color
+	lda #$42
+	sta COLUP0
+; Set playfield mirroring
+	lda #$01
+	sta CTRLPF
+
+
+
+	
+        ;Use the first scanline to position the bloons
+	
+        
+        
+        sta WSYNC
+        lda #$70
+        
+        sta RESP0
+        
+	
+        
+	Skip_Scanlines 31 ; Draw the first 32 scanlines
+
+	ldy #0
+
+ScanLoopMain
+	
+	
+	lda PFData0,y
+	sta PF0		; set the PF1 playfield pattern register
+	lda PFData1,y
+	sta PF1		; set the PF1 playfield pattern register
+	lda PFData2,y
+	sta PF2		; set the PF2 playfield pattern register
+
+	
+        Skip_Scanlines #3
+	ldx #7;
+
+ScanLoopInner
+
+	sta WSYNC	; wait for next scanline
+        lda PlayerData0,x
+        sta GRP0
+	dex 
+	bne ScanLoopInner
+	
+        sta WSYNC
+        lda PlayerData0,x
+        sta GRP0
+        
+        sta WSYNC
+        lda 0
+        sta GRP0
+        Skip_Scanlines 4
+        
+	iny
+        cpy #8
+	bne ScanLoopMain
+	
+	ldx #32
+	lda #0
+	sta PF0
+	sta PF1
+	sta PF2	
+
+ScanLoop2
+
+	sta WSYNC
+	dex
+	bne ScanLoop2
+
+
+
+
+; Reenable VBLANK for bottom (and top of next frame)
+	lda #2
+        sta VBLANK
+; 30 lines of overscan
+	ldx #30
+LVOver	sta WSYNC
+	dex
+	bne LVOver
+	
+; Go back and do another frame
+	inc Counter
+	jmp NextFrame
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Epilogue
+
+	align $100
+        
+PFData0
+        .byte #%11110000
+        .byte #%00000000
+        .byte #%00000000
+        .byte #%00000000
+        .byte #%00000000
+        .byte #%00000000
+        .byte #%00000000
+        .byte #%00000000
+
+PFData1
+        .byte #%11111111
+        .byte #%00000000
+        .byte #%00000000
+        .byte #%00000000
+        .byte #%11111111
+        .byte #%11110000
+        .byte #%11110000
+        .byte #%11111111
+
+PFData2
+        .byte #%00001111
+        .byte #%00001111
+        .byte #%00001111
+        .byte #%00001111
+        .byte #%00001111
+        .byte #%00000000
+        .byte #%00000000
+        .byte #%11111111
+
+PlayerData0
+        .byte #%00011000
+        .byte #%00111100
+        .byte #%00111100
+        .byte #%01111110
+        .byte #%01011110
+        .byte #%01001110
+        .byte #%00111100
+        .byte #%00011000
+
+
+
+
+	org $fffc
+        .word Start	; reset vector
+        .word Start	; BRK vector
+
+
+
