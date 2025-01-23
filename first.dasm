@@ -1,0 +1,47 @@
+        processor 6502
+        include "vcs.h"
+        include "macro.h"
+        
+        ;=======================
+        ;Define our variables	
+        ;=======================
+        
+        seg Variables
+        org $0080
+        
+        ;=======================
+        ;Define where ROM begins
+        ;=======================
+        
+        seg code
+        org $F000
+        
+        
+Start:
+	sei		; disable interrupts
+        cld		; disable BCD mode
+        
+        ldx #$FF	; Load 255 into x-register
+        txs		; Transfer x into the stack pointer
+        
+        ;=======================
+        ;Clear out the zero page
+        ;=======================
+        
+        lda #0
+        ldx #$FF
+        sta $FF
+        
+MemLoop:
+        dex
+	sta $0,x
+        bne MemLoop
+        
+        
+        ;=======================
+        ;Set the reset vectors
+        ;=======================
+        
+        org $FFFC
+        .word Start
+        .word Start
