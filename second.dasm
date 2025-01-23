@@ -1,0 +1,94 @@
+
+	processor 6502
+        include "vcs.h"
+        include "macro.h"
+        include "xmacro.h"
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Variables segment
+
+        seg.u Variables
+	org $80
+
+Temp		.byte
+BGColor		.byte
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Code segment
+
+	seg Code
+        org $f000
+
+Start
+	CLEAN_START
+        
+
+
+NextFrame
+			;VSYNC
+        
+        lda #$2
+        sta VBLANK
+        sta VSYNC
+        
+        sta WSYNC
+        sta WSYNC
+        sta WSYNC
+        
+        		;VBLANK
+                        
+	lda #0
+        sta VSYNC
+        
+        ldx #$0e
+        stx COLUBK
+        
+        ;Move down 37 lines
+        
+        ldx #$25
+VBlank
+	sta WSYNC
+        dex
+        bne VBlank
+        
+        		;Frame
+        sta VBLANK
+        
+        ldx #$c0
+        lda BGColor
+        
+        
+Rainbow
+	adc #$1
+	sta COLUBK
+        sta WSYNC
+        dex
+        bne Rainbow
+        
+        		;Overscan
+	;Move down 30 lines
+        
+        lda #$2
+        sta VBLANK
+        
+        ldx #$1E
+        
+Overscan
+	sta WSYNC
+        dex
+        bne Overscan
+        
+        dec BGColor
+        
+        jmp NextFrame
+        
+        
+        
+        
+        
+        
+        
+        
+        org $fffc
+        .word Start
+        .word Start
