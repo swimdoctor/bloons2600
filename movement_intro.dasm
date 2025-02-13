@@ -1,0 +1,80 @@
+
+	processor 6502
+        include "vcs.h"
+        include "macro.h"
+
+;==========================
+;	Variables
+;==========================
+
+	SEG.u Variables
+        ORG $80
+        
+XPOS	= $80
+XDIR	= $81
+        
+;==========================
+;	Code
+;==========================
+        
+        
+	SEG Code
+      	ORG $F000
+        
+Start
+        CLEAN_START
+        
+        LDA #76
+        STA XPOS
+        LDA #$01
+        STA XDIR
+        
+        LDA #$82
+        STA COLUBK
+        LDA #$FF
+        STA COLUP0
+        
+        STA HMCLR
+        
+Loop
+	STA WSYNC
+        LDA #2
+        STA VSYNC
+        STA WSYNC
+        STA WSYNC
+        STA WSYNC
+        LDA #0
+        STA VSYNC
+        
+        LDX #34
+
+VertBlank
+	STA WSYNC
+        DEX
+        BNE VertBlank
+        
+        LDA #0
+        STA VBLANK
+        
+        LDX #192
+        
+PlayField
+	STA WSYNC
+	DEX
+        BNE PlayField
+        
+        
+      	LDX #30
+        
+Bottom
+        STA WSYNC
+        DEX
+        BNE Bottom
+        
+        JMP Loop
+        
+        JMP Start
+        
+        ORG $FFFC
+        .word Start
+        .word Start
